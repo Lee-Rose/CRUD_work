@@ -32,19 +32,42 @@ class StockSerializer(serializers.ModelSerializer):
         depth = 1
 
 
-    def create(self, validated_data):
-        # address = serializers.CharField()
-        # positions = ProductPositionSerializer(many=True)
-        #
-        # validated_data['address'] = address
+    def create(self, validated_data):  #С методом создания и обновления разобралась, осталось добавить фильтрацию и пагинацию
 
         positions = validated_data.pop('positions')
-
-        stock = super().create(validated_data)
+        stock = Stock.objects.create(**validated_data)
+        for object in positions:
+            StockProduct.objects.create(stock=stock, **object)
         return stock
+
 
     def update(self, instance, validated_data):
 
-        positions = validated_data.pop('positions')
-        stock = super().update(instance, validated_data)
-        return stock
+        positions= validated_data.pop('positions')
+
+        remove_items = {item.id: item for item in instance.positions.all()}
+
+        for item in positions:
+            item_id = item.get('id', None)
+            if item_id is None:
+                instance.positions.create(**item)
+            elif remove_items.get(item_id, None) is not None:
+                instance_item = remove_items.pop(item_id)
+                Stock.objects.filter(id=instance_item.id).update(**item)
+
+        for item in remove_items.values():
+            item.delete()
+
+        for field in validated_data:
+            setattr(instance, field, validated_data.get(field, getattr(instance, field)))
+        instance.save()
+
+        return instance
+
+
+
+
+
+
+
+
