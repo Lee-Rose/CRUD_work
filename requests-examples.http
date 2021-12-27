@@ -70,7 +70,7 @@ Content-Type: application/json
 {
   "positions": [
     {
-      "product": 2,
+      "product": 5,
       "quantity": 100,
       "price": 130.80
     },
@@ -85,5 +85,5 @@ Content-Type: application/json
 ###
 
 # поиск складов, где есть определенный продукт
-GET {{baseUrl}}/stocks/?products=2
+GET {{baseUrl}}/stocks/?products=4
 Content-Type: application/json

@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from .models import Product, Stock, StockProduct
 
 class ProductSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Product
         fields = '__all__'
@@ -31,8 +32,20 @@ class StockSerializer(serializers.ModelSerializer):
         fields = ['address','positions']
         depth = 1
 
+    def validate_positions(self,value):
+        if not value:
+            raise serializers.ValidationError('Не указаны позиции продукта')
+        product_ids = [item['product'].id for item in value]
+        if len(product_ids) != len(set(product_ids)):
+            raise serializers.ValidationError('Нельзя дублировать позиции в заказе')
+        for item in value:
+            if item['quantity'] == 0:
+                raise serializers.ValidationError('Количество товара может быть только положительным числом')
 
-    def create(self, validated_data):  #С методом создания и обновления разобралась, осталось добавить фильтрацию и пагинацию
+        return value
+
+
+    def create(self, validated_data):
 
         positions = validated_data.pop('positions')
         stock = Stock.objects.create(**validated_data)
@@ -44,7 +57,6 @@ class StockSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
 
         positions= validated_data.pop('positions')
-
         remove_items = {item.id: item for item in instance.positions.all()}
 
         for item in positions:
