@@ -1,7 +1,6 @@
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
-
 from .models import Product, Stock, StockProduct
+
 
 class ProductSerializer(serializers.ModelSerializer):
 
@@ -9,13 +8,12 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = '__all__'
 
-class ProductPositionSerializer(serializers.ModelSerializer):
-    #сериализатор для позиции продукта на складе
-    quantity = serializers.IntegerField(default=1)
 
+class ProductPositionSerializer(serializers.ModelSerializer):
+    #serializer for product item in stock
+    quantity = serializers.IntegerField(default=1)
     product = ProductSerializer()
     product = product['id']
-
     price = serializers.DecimalField(min_value=0, max_digits=18, decimal_places=2)
 
     class Meta:
@@ -24,6 +22,7 @@ class ProductPositionSerializer(serializers.ModelSerializer):
 
 
 class StockSerializer(serializers.ModelSerializer):
+
     address = serializers.CharField()
     positions = ProductPositionSerializer(many=True)
 
@@ -34,13 +33,13 @@ class StockSerializer(serializers.ModelSerializer):
 
     def validate_positions(self,value):
         if not value:
-            raise serializers.ValidationError('Не указаны позиции продукта')
+            raise serializers.ValidationError('Product items not listed')
         product_ids = [item['product'].id for item in value]
         if len(product_ids) != len(set(product_ids)):
-            raise serializers.ValidationError('Нельзя дублировать позиции в заказе')
+            raise serializers.ValidationError('You can not duplicate items in the order')
         for item in value:
             if item['quantity'] == 0:
-                raise serializers.ValidationError('Количество товара может быть только положительным числом')
+                raise serializers.ValidationError('Quantity of goods can only be a positive number')
 
         return value
 
