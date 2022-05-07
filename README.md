@@ -57,3 +57,5 @@ manage.py migrate
 ```bash
 python manage.py runserver
 ```
+Запуск контейнера 
+docker run --name netology_1 stocks_neto:2.0
